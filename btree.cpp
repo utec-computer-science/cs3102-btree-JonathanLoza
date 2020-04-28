@@ -24,16 +24,7 @@ public:
             return false;
         }
     };
-
-    class post_order_print{
-    public:
-        void operator() (void){
-            std::cout << "post order" << std::endl;
-        }
-    };
-
     typedef simple_search functor_t;
-    typedef post_order_print print_t;
 };
 
 template <typename T>
@@ -66,16 +57,7 @@ public:
             return -1;
         }
     };
-
-    class pre_order_print{
-    public:
-        void operator() (void){
-            std::cout << "pre order" << std::endl;
-        }
-    };
-
     typedef binary_search functor_t;
-    typedef pre_order_print print_t;
 };
 
 template <typename T, int S>
@@ -251,10 +233,14 @@ public:
     }
 
     void printNodes(){
-        for(int i=0; i<actualSize;i++)
-            std::cout<<keys[i]<<" ";
-        std::cout<<std::endl;
-        printChild();
+      printValues();  
+      std::cout<<std::endl;
+      printChild();
+    }
+
+    void printValues(){
+      for(int i=0;i<actualSize;i++)
+        std::cout<<keys[i]<<" ";
     }
 
     void printChild(){
@@ -277,12 +263,50 @@ public:
 };
 
 
-template <typename T, int S>
+template<typename N>
+class PreOrder
+{
+  public:
+  class pre_order_print
+  {
+    public:
+    void operator()(N node){
+      pre_order_print print;
+      if(!node)
+        return;
+      node->printValues();
+      for(auto x:node->ptrs)
+        print(x);
+    }
+  };
+    typedef pre_order_print print_t;
+};
+
+template<typename N>
+class PostOrder
+{
+  public:
+    class post_order_print{
+      public:
+        void operator()(N node){
+          post_order_print print;
+          if(!node)
+            return;
+          for(auto x:node->ptrs)
+            print(x);
+          node->printValues();
+        }
+    };
+    typedef post_order_print print_t;
+};
+
+
+template <typename T,typename P ,int S>
 class BTree {
 public:
     typedef typename T::value_t value_t;
 
-    typedef typename T::print_t print_t;
+    typedef typename P::print_t print_t;
 
     BNode<T,S>* root;
     print_t print;
@@ -310,12 +334,12 @@ public:
         return root->searchValueInNode(val);
     }
 
-    friend std::ostream& operator<<(std::ostream& out, BTree<T,S> tree){
+    friend std::ostream& operator<<(std::ostream& out, BTree<T,P,S> tree){
         //tree.print();// (out)
         // IN PRE POST LEVEL ORDER
         if(!tree.root)
           return out;
-        tree.root->printNodes();
+        tree.print(tree.root);
         return out;
     }
 };
@@ -323,7 +347,8 @@ public:
 
 int main() {
     typedef BS_Traits<int> btrait_t;
-    BTree<btrait_t,4> tree;
+    typedef PreOrder<BNode<btrait_t,4>*> print_t;
+    BTree<btrait_t,print_t,4> tree;
     tree.insert(16);
     tree.insert(5);
     tree.insert(6);
@@ -337,11 +362,15 @@ int main() {
     tree.insert(4);
     tree.insert(3);
     tree.insert(12);
-    std::cout<<"Number find response: "<<tree.find(16)<<std::endl;
-    tree.root->printNodes();
+    std::cout<<"Number find 16 response: "<<tree.find(16)<<std::endl;
+    //tree.root->printNodes();
+    std::cout<<"PreOrder\n";
+    std::cout<<tree;
+    std::cout<<std::endl;
+
     typedef SS_Traits<float> strait_t;
-    BTree<strait_t,7> stree;
-    std::cout<<stree<< std::endl; 
+    typedef PostOrder<BNode<strait_t,7>*> print_t2;
+    BTree<strait_t,print_t2,7> stree;
     stree.insert(16);
     stree.insert(5);
     stree.insert(6);
@@ -355,8 +384,11 @@ int main() {
     stree.insert(4);
     stree.insert(3);
     stree.insert(12);
-    std::cout<<"Number find response: "<<stree.find(16)<<std::endl;
-    stree.root->printNodes();
+    std::cout<<"Number find 86 response: "<<stree.find(86)<<std::endl;
+    //stree.root->printNodes();
+    std::cout<<"PostOrder\n";
+    std::cout<<stree;
+    std::cout<<std::endl;
     
 }
 
